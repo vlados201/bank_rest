@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-insert-roles
+      author: backend
+
+      changes:
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: name
+                  value: ROLE_ADMIN
+
+        - insert:
+            tableName: roles
+            columns:
+              - column:
+                  name: name
+                  value: ROLE_USER

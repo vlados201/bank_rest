@@ -1,0 +1,514 @@
+openapi: 3.1.0
+info:
+  title: Система управления картами
+  description: |
+    <pre>
+    Возможности
+     Администратор:
+       - Создает, блокирует, активирует, удаляет карты
+       - Управляет пользователями
+       - Видит все карты
+     Пользователь:
+       - Просматривает свои карты (поиск + пагинация)
+       - Запрашивает блокировку карты
+       - Делает переводы между своими картами
+       - Смотрит баланс
+    </pre>
+servers:
+  - url: http://localhost:8081
+    description: Generated server url
+security:
+  - bearerAuth: []
+paths:
+  /api/transfers:
+    post:
+      tags:
+        - transfer-controller
+      summary: Перевод средств
+      operationId: transfer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TransferRequestDto"
+        required: true
+      responses:
+        "200":
+          description: OK
+  /api/cards/{id}/block-request:
+    post:
+      tags:
+        - card-controller
+      summary: Сделать запрос на блокировку карты
+      operationId: requestBlock
+      parameters:
+        - name: id
+          in: path
+          description: id карты
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+  /api/auth/register:
+    post:
+      tags:
+        - auth-controller
+      summary: Зарегистрироваться
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterUserRequestDto"
+        required: true
+      responses:
+        "200":
+          description: OK
+  /api/auth/login:
+    post:
+      tags:
+        - auth-controller
+      summary: Войти в аккаунт
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/JwtResponse"
+  /api/admin/cards:
+    get:
+      tags:
+        - card-controller
+      summary: Посмотреть список всех зарегестрированных карт с возможностью пагинации
+        и фильтрации
+      operationId: getAllCards
+      parameters:
+        - name: page
+          in: query
+          description: № страницы
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+        - name: size
+          in: query
+          description: Кол-во записей на одной странице
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 20
+        - name: ownerId
+          in: query
+          description: id держателя карты
+          required: false
+          schema:
+            type: integer
+            format: int64
+        - name: status
+          in: query
+          description: Статус карты
+          required: false
+          schema:
+            type: string
+            enum:
+              - ACTIVE
+              - BLOCKED
+              - EXPIRED
+              - BLOCK_REQUESTED
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageCardDto"
+    post:
+      tags:
+        - card-controller
+      summary: Создать карту
+      operationId: createCard
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCardRequestDto"
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CardDto"
+  /api/admin/users/{id}/enabled:
+    patch:
+      tags:
+        - admin-user-controller
+      summary: Изменить статус учетной записи пользователя
+      operationId: setUserEnabled
+      parameters:
+        - name: id
+          in: path
+          description: id пользователя
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: enabled
+          in: query
+          description: Флаг активности аккаунта
+          required: true
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: OK
+  /api/admin/cards/{id}/block:
+    patch:
+      tags:
+        - card-controller
+      summary: Заблокировать карту по id
+      operationId: blockCard
+      parameters:
+        - name: id
+          in: path
+          description: id карты
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+  /api/admin/cards/{id}/activate:
+    patch:
+      tags:
+        - card-controller
+      summary: Активировать карту по id
+      operationId: activateCard
+      parameters:
+        - name: id
+          in: path
+          description: id карты
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+  /api/cards:
+    get:
+      tags:
+        - card-controller
+      summary: Посмотреть список своих карт (в т. ч. узнать баланс) с возможностью
+        пагинации и фильтрации
+      operationId: getMyCards
+      parameters:
+        - name: page
+          in: query
+          description: № страницы
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+        - name: size
+          in: query
+          description: Кол-во записей на одной странице
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 20
+        - name: status
+          in: query
+          description: Статус карты
+          required: false
+          schema:
+            type: string
+            enum:
+              - ACTIVE
+              - BLOCKED
+              - EXPIRED
+              - BLOCK_REQUESTED
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageCardDto"
+  /api/admin/users:
+    get:
+      tags:
+        - admin-user-controller
+      summary: Посмотреть список всех пользователей
+      operationId: getUsers
+      parameters:
+        - name: page
+          in: query
+          description: № страницы
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 0
+        - name: size
+          in: query
+          description: Кол-во отображаемых записей
+          required: false
+          schema:
+            type: integer
+            format: int32
+            default: 20
+        - name: username
+          in: query
+          description: Имя пользователя
+          required: false
+          schema:
+            type: string
+        - name: enabled
+          in: query
+          description: Флаг активности аккаунта
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/PageUserDto"
+  /api/admin/cards/{id}:
+    get:
+      tags:
+        - card-controller
+      summary: Посмотреть информацию о карте по id
+      operationId: getCardById
+      parameters:
+        - name: id
+          in: path
+          description: id карты
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: "#/components/schemas/CardDto"
+    delete:
+      tags:
+        - card-controller
+      summary: Удалить карту по id
+      operationId: deleteCard
+      parameters:
+        - name: id
+          in: path
+          description: id карты
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+components:
+  schemas:
+    TransferRequestDto:
+      type: object
+      properties:
+        fromCardId:
+          type: integer
+          format: int64
+        toCardId:
+          type: integer
+          format: int64
+        amount:
+          type: number
+      required:
+        - amount
+        - fromCardId
+        - toCardId
+    RegisterUserRequestDto:
+      type: object
+      properties:
+        username:
+          type: string
+          maxLength: 50
+          minLength: 3
+        password:
+          type: string
+          maxLength: 100
+          minLength: 6
+      required:
+        - password
+        - username
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+    JwtResponse:
+      type: object
+      properties:
+        token:
+          type: string
+    CreateCardRequestDto:
+      type: object
+      properties:
+        ownerId:
+          type: integer
+          format: int64
+      required:
+        - ownerId
+    CardDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        maskedNumber:
+          type: string
+        ownerId:
+          type: integer
+          format: int64
+        expiryDate:
+          type: string
+          format: date
+        status:
+          type: string
+        balance:
+          type: number
+    PageCardDto:
+      type: object
+      properties:
+        totalPages:
+          type: integer
+          format: int32
+        totalElements:
+          type: integer
+          format: int64
+        size:
+          type: integer
+          format: int32
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/CardDto"
+        number:
+          type: integer
+          format: int32
+        sort:
+          $ref: "#/components/schemas/SortObject"
+        first:
+          type: boolean
+        last:
+          type: boolean
+        numberOfElements:
+          type: integer
+          format: int32
+        pageable:
+          $ref: "#/components/schemas/PageableObject"
+        empty:
+          type: boolean
+    PageableObject:
+      type: object
+      properties:
+        offset:
+          type: integer
+          format: int64
+        sort:
+          $ref: "#/components/schemas/SortObject"
+        paged:
+          type: boolean
+        pageNumber:
+          type: integer
+          format: int32
+        pageSize:
+          type: integer
+          format: int32
+        unpaged:
+          type: boolean
+    SortObject:
+      type: object
+      properties:
+        empty:
+          type: boolean
+        sorted:
+          type: boolean
+        unsorted:
+          type: boolean
+    PageUserDto:
+      type: object
+      properties:
+        totalPages:
+          type: integer
+          format: int32
+        totalElements:
+          type: integer
+          format: int64
+        size:
+          type: integer
+          format: int32
+        content:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserDto"
+        number:
+          type: integer
+          format: int32
+        sort:
+          $ref: "#/components/schemas/SortObject"
+        first:
+          type: boolean
+        last:
+          type: boolean
+        numberOfElements:
+          type: integer
+          format: int32
+        pageable:
+          $ref: "#/components/schemas/PageableObject"
+        empty:
+          type: boolean
+    UserDto:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        enabled:
+          type: boolean
+        roles:
+          type: array
+          items:
+            type: string
+          uniqueItems: true
+  securitySchemes:
+    bearerAuth:
+      type: http
+      name: bearerAuth
+      scheme: bearer
+      bearerFormat: JWT

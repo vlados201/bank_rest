@@ -1,0 +1,16 @@
+databaseChangeLog:
+  - include:
+      file: 001-init/001-create-users.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 001-init/002-create-roles.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 001-init/003-create-user-roles.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 001-init/004-create-cards.yaml
+      relativeToChangelogFile: true
+  - include:
+      file: 002-data/005-insert-roles.yaml
+      relativeToChangelogFile: true
